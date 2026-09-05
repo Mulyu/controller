@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Virtual Controller</string>
+
+    <string name="overlay_notification_channel">Virtual controller overlay</string>
+    <string name="overlay_notification_title">Virtual controller is active</string>
+    <string name="overlay_notification_text">Overlay and virtual gamepad are running</string>
+    <string name="overlay_notification_stop">Stop</string>
+</resources>
