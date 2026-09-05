@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +31,10 @@ import rikka.shizuku.Shizuku
  */
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        private const val SHIZUKU_PERMISSION_REQUEST_CODE = 5116
+    }
+
     private var shizukuAvailable by mutableStateOf(false)
     private var shizukuGranted by mutableStateOf(false)
     private var overlayGranted by mutableStateOf(false)
@@ -47,8 +52,10 @@ class MainActivity : ComponentActivity() {
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener { refreshShizukuState() }
     private val binderDeadListener = Shizuku.OnBinderDeadListener { shizukuAvailable = false }
     private val permissionResultListener =
-        Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-            shizukuGranted = grantResult == PackageManager.PERMISSION_GRANTED
+        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            if (requestCode == SHIZUKU_PERMISSION_REQUEST_CODE) {
+                shizukuGranted = grantResult == PackageManager.PERMISSION_GRANTED
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,8 +116,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestShizukuPermission() {
-        if (!Shizuku.pingBinder() || Shizuku.isPreV11()) return
-        Shizuku.requestPermission(1)
+        // Also acts as a manual retry: re-poll rather than trust possibly
+        // stale state, in case the binder-received listener missed an event.
+        refreshShizukuState()
+        when {
+            !shizukuAvailable -> Toast.makeText(
+                this,
+                "Shizuku not detected. Confirm the Shizuku app itself shows " +
+                    "\"Running\", then tap Request again.",
+                Toast.LENGTH_LONG,
+            ).show()
+            Shizuku.isPreV11() -> Toast.makeText(
+                this,
+                "Installed Shizuku is too old (needs API v11+). Please update the Shizuku app.",
+                Toast.LENGTH_LONG,
+            ).show()
+            shizukuGranted -> Toast.makeText(this, "Shizuku permission already granted.", Toast.LENGTH_SHORT).show()
+            else -> Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
+        }
     }
 
     private fun requestOverlayPermission() {

@@ -77,6 +77,25 @@ Before trusting this beyond "it builds in CI":
 - Games using `HIDE_OVERLAY_WINDOWS` (Android 12+) can force-hide this
   overlay; there is no workaround.
 
+## Troubleshooting
+
+- **App shows "Shizuku: not running" even though the Shizuku app itself
+  shows "Running", and tapping Request does nothing.** This was caused by a
+  missing `<queries>` declaration for Shizuku's package
+  (`moe.shizuku.privileged.api`) in `AndroidManifest.xml` -- required on
+  Android 11+ (API 30+) package-visibility rules, without which this app
+  cannot resolve Shizuku at all, and `Shizuku.requestPermission()` silently
+  no-ops. Fixed; if it recurs, confirm `adb shell pm list packages | grep
+  shizuku` shows the package and that this app was reinstalled (not just
+  updated) after the manifest fix, since manifest `<queries>` changes need a
+  fresh install to take effect reliably. `adb logcat -s ShizukuProvider` on
+  the device while relaunching the app is the most direct way to see
+  whether the binder handshake is happening at all.
+- **Request button now gives feedback instead of doing nothing** even when
+  Shizuku genuinely isn't reachable -- pressing it always re-polls
+  `Shizuku.pingBinder()` first (a manual retry), then shows a toast
+  explaining why it can't proceed if it still can't.
+
 ## Roadmap (per the design doc)
 
 - **v0 (this PoC):** Shizuku + `uinput` CLI backend, fixed stick+4-button

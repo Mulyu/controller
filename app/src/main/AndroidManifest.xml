@@ -1,5 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+      Required for Shizuku on Android 11+ (API 30+): without declaring
+      visibility to the Shizuku app's package, this app cannot resolve it,
+      which breaks the permission-request flow and can leave the app stuck
+      reporting Shizuku as "not running" even while it is.
+    -->
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+    </queries>
+
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
